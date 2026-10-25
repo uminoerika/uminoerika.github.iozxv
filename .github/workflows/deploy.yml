@@ -5,12 +5,13 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+# Explicit permissions required for GitHub Actions to publish to Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Prevent concurrency deadlocks by using a dynamic workflow-specific group key
+# Isolated concurrency group to prevent deadlocks on GitHub's internal "pages" lock
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -19,13 +20,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout your repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install, build, and upload your Astrofy site
+      - name: Install, build, and upload Astrofy site
         uses: withastro/action@v3
         with:
           node-version: 20
+          # Explicitly set npm to prevent pnpm-lockfile auto-detection errors.
+          # (If you prefer pnpm, change this line to: package-manager: pnpm@latest)
+          package-manager: npm
 
   deploy:
     needs: build
@@ -36,4 +40,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@v4
